@@ -21,6 +21,8 @@ public class LexAn {
 	String lextok = "";
 	int strtok = 0;
 	int flttok = 0;
+	int mincount = 0;
+	int ecount = 0;
 	for(int i = 0; i < lexemes.length; i++){
 	    for(int j = 0; j < 50; j++){
 		if(lexemes[i][j] != null){
@@ -36,8 +38,10 @@ public class LexAn {
 				      (lexemes[i][j].charAt(k) == '-')) &&
 				     ((!lexemes[i][j].contains(".")) &&
 				      (!lexemes[i][j].contains("e")))){
-				if((lexemes[i][j].charAt(k) == '-') && (k != 0)){
-				    System.out.println("Error on line: " + j + ". Unexpected " + lexemes[i][j].charAt(k));
+				if((lexemes[i][j].charAt(k) == '-') || (lexemes[i][j].charAt(k) == 45)){
+				    mincount++;
+				}else if(mincount > 1){
+				    lextok = ", unknown";
 				}else{
 				    lextok = ", integer";
 				}
@@ -46,14 +50,27 @@ public class LexAn {
 				     (lexemes[i][j].charAt(k) == '-') ||
 				     (lexemes[i][j].charAt(k) == '.') ||
 				     (lexemes[i][j].charAt(k) == 'e')){
-				if((lexemes[i][j].charAt(k) == '-') && (k != 0)){
-				    System.out.println("Error on line: " + j + ". Unexpected " + lexemes[i][j].charAt(k));
+				if((lexemes[i][j].charAt(k) == '-') || (lexemes[i][j].charAt(k) == 45)){
+				    if((k > 0) && (lexemes[i][j].charAt(k-1) == 'e')){
+					mincount++;
+				    }
+				    else if(k == 0){
+					mincount++;
+				    }
+				    else{
+					mincount += 3;
+				    }
 				}
-				if((lexemes[i][j].charAt(k) == '.') && (flttok < 1)){
-				    flttok = 1;
-				    lextok = ", float";
-				}else if((lexemes[i][j].charAt(k) == 'e') && (flttok < 1) && (k > 0)){
-				    flttok = 1;
+				if((lexemes[i][j].charAt(k) == '.')){
+				    flttok++;
+				}
+				if(lexemes[i][j].indexOf("e") != lexemes[i][j].lastIndexOf("e")){
+				    ecount++;
+				}
+				if((ecount > 1) || (flttok > 2) || (mincount > 2)){
+				    lextok = ", unknown";
+				}
+				else{
 				    lextok = ", float";
 				}
 			    }else if((lexemes[i][j].charAt(k) == '\"')){
@@ -73,6 +90,7 @@ public class LexAn {
 				     (strtok == 0)){
 				if((k == 0) && ((lexemes[i][j].charAt(k) >= 48) && (lexemes[i][j].charAt(k) <= 57))){
 				    System.out.println("Error on line: " + j + ". Unexpected " + lexemes[i][j].charAt(k));
+				    lextok = ", unknown";
 				}else{
 				    lextok = ", id";
 				}
@@ -83,6 +101,8 @@ public class LexAn {
 			a = lexemes[i][j] + lextok;       
 			tokens.add(a);
 			flttok = 0;
+			mincount = 0;
+			ecount = 0;
 			lextok = "";
 		    }
 		}

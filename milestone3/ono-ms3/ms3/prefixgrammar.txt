@@ -1,0 +1,28 @@
+/*
+ * Possible not the real solution
+ */
+
+Pre-> Operator Real Real
+Pre-> Operator Pre Real
+Pre-> Operator Real Pre
+Pre-> Operator Pre Pre
+Pre-> Real
+Real -> Real | sin Real | cos Real | tan Real
+
+
+Operator Real Real
+Operator Pre' Real
+
+Pre' -> Operator 
+
+
+Operator Real Operator Operator Real Real Real
++ 1 * + 2 3 7
+
+
+Operator Real Pre
++		1		*
+Operator Real Operator Pre Real
++ 		1		*		+	
+Operator Real Operator Operator Real Real Real
++		1		*		+		2	3	7

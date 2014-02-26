@@ -1,0 +1,277 @@
+diff -rupN ./ms3/Lexer.java ./ms4/Lexer.java
+--- ./ms3/Lexer.java	2012-03-16 21:21:00.000000000 -0700
++++ ./ms4/Lexer.java	2012-03-13 06:40:48.000000000 -0700
+@@ -6,7 +6,7 @@ import java.util.ArrayList;
+ import java.util.Hashtable;
+ 
+ 
+-public class Lexer { 
++public class Lexer {
+ 	private static ArrayList<String> ibtldata = new ArrayList<String>();
+ 	private static String[][] chars, lexemes;
+ 	private static ArrayList<Tokens> tokens = new ArrayList<Tokens>();
+Binary files ./ms3/lloydg_ms4_report.pdf and ./ms4/lloydg_ms4_report.pdf differ
+diff -rupN ./ms3/Makefile ./ms4/Makefile
+--- ./ms3/Makefile	2012-02-24 04:10:40.000000000 -0800
++++ ./ms4/Makefile	2012-03-14 00:41:52.000000000 -0700
+@@ -2,13 +2,15 @@ LEX=Lexer
+ PAR=Parser
+ TOK=Tokens
+ TRAN=Translator
++NODE=Nodes
++PARTR=ParseTree
+ STUTEST=stutest
+ PROFTEST=proftest
+ 
+ all: compiler ${STUTEST}.out
+ 
+-compiler: ${LEX}.java ${PAR}.java ${TOK}.java ${TRAN}.java 
+-	javac ${LEX}.java ${PAR}.java ${TOK}.java ${TRAN}.java
++compiler: ${LEX}.java ${PAR}.java ${TOK}.java ${NODE}.java ${PARTR}.java ${TRAN}.java 
++	javac ${LEX}.java ${PAR}.java ${TOK}.java ${NODE}.java ${PARTR}.java ${TRAN}.java
+ 
+ ${STUTEST}.out: compiler ${STUTEST}.in
+ 	java ${TRAN} ${STUTEST}.in > ${STUTEST}.out
+diff -rupN ./ms3/Nodes.java ./ms4/Nodes.java
+--- ./ms3/Nodes.java	1969-12-31 16:00:00.000000000 -0800
++++ ./ms4/Nodes.java	2012-03-13 01:07:14.000000000 -0700
+@@ -0,0 +1,27 @@
++
++public class Nodes {
++	public Tokens value;
++	public Nodes rchild;
++	public Nodes lchild;
++	public Nodes parent;
++	public int pos;
++	public String primType;
++	
++	public Nodes(Tokens input){
++		value=input;
++		rchild=null;
++		lchild=null;
++		parent = null;
++		primType = null;
++	}
++	
++	public void addL(Tokens left){
++		this.lchild=new Nodes(left);
++		this.lchild.parent = this;
++	}
++	
++	public void addR(Tokens right){
++		this.rchild=new Nodes(right);
++		this.rchild.parent = this;
++	}
++}
+diff -rupN ./ms3/Parser.java ./ms4/Parser.java
+--- ./ms3/Parser.java	2012-03-16 21:21:00.000000000 -0700
++++ ./ms4/Parser.java	2012-03-13 06:40:48.000000000 -0700
+@@ -11,7 +11,7 @@ public class Parser {
+     if(result == 0) {
+       System.err.println("Success");
+     }
+-    return; 
++    return;
+   }
+ 
+ 
+diff -rupN ./ms3/ParseTree.java ./ms4/ParseTree.java
+--- ./ms3/ParseTree.java	1969-12-31 16:00:00.000000000 -0800
++++ ./ms4/ParseTree.java	2012-03-14 00:41:52.000000000 -0700
+@@ -0,0 +1,118 @@
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
++
++public class ParseTree {
++	public static Nodes root;
++
++	public Nodes makeTree(ArrayList<Tokens> tokens, int inpos){
++		int pos=inpos;
++		//while(pos < tokens.size()){
++			root = recursive(tokens, pos);
++			
++		//}
++		return root;
++	}
++
++
++
++	private List<String> singleOps = Arrays.asList("not","sin","cos","tan","exp","not invert", "expression");
++
++
++
++	public Nodes recursive(ArrayList<Tokens> tokens, int pos){
++		if(tokens.size()<=pos)
++			System.exit(0);
++		Nodes node=new Nodes(tokens.get(++pos));
++		if(tokens.get(++pos).tValue.equalsIgnoreCase("(")){
++			makeLeft(node, tokens, pos);
++			pos = node.lchild.pos+1;
++		}else{
++			node.addL(tokens.get(pos));
++		}
++		++pos;
++		if(pos < tokens.size()){
++			if( tokens.get(pos).tValue.equalsIgnoreCase("(")){
++				makeRight(node, tokens, pos);
++				pos = node.rchild.pos+1;
++			}else if(singleOps.contains(node.value.tValue) || singleOps.contains(node.value.tType)){
++				pos++;
++			}else{
++				node.addR(tokens.get(pos));
++			}
++		}
++		node.pos = pos;
++		return node;
++	}
++
++	public void makeLeft(Nodes node, ArrayList<Tokens> tokens, int pos){
++		node.lchild=recursive(tokens, pos);
++		node.lchild.parent = node;
++	}
++
++	public void makeRight(Nodes node, ArrayList<Tokens> tokens, int pos){
++		node.rchild=recursive(tokens, pos);
++		node.rchild.parent = node;
++	}
++
++	public void postTraverse(Nodes root){
++		Nodes current = root;
++		if(current.lchild!=null){
++			postTraverse(current.lchild);
++		}
++		if(current.rchild!=null){
++			postTraverse(current.rchild);
++		}
++		if(current.lchild==null){
++			current.primType=current.value.tType;
++		}else if(current.rchild==null){
++			current.primType=current.lchild.primType;
++		}else if(current.lchild.primType.equalsIgnoreCase(current.rchild.primType)){
++			current.primType=current.lchild.primType;
++		}else if((current.lchild.primType.equalsIgnoreCase("real")&&current.rchild.primType.equalsIgnoreCase("integer"))||
++				(current.rchild.primType.equalsIgnoreCase("real")&&current.lchild.primType.equalsIgnoreCase("integer"))){
++			current.primType="real";
++			System.out.print("s>f ");
++		}else {
++			System.err.println("Error encountered in post-traversal of tree.");
++			System.exit(-1);
++		}
++		String prefix = "";
++		String postfix = "";
++		if(!current.primType.equalsIgnoreCase("real")&&current.value.tType.equalsIgnoreCase("realop")){
++			System.err.println("Type mismatch");
++			System.exit(-1);
++		}
++		if(current.value.tType.equalsIgnoreCase("expression")){
++			if(current.lchild.primType.equalsIgnoreCase("real")){
++				if(current.lchild.value.tType.equalsIgnoreCase("relation"))
++					current.value.tValue=".";
++				else
++				current.value.tValue = "f.";
++			}else if(current.lchild.primType.equalsIgnoreCase("string")){
++				current.value.tValue = "type";
++			}else{
++				current.value.tValue = ".";
++			}
++		}else if(current.primType.equalsIgnoreCase("real")){
++			if(current.value.tType.equalsIgnoreCase("operator")||
++					current.value.tType.equalsIgnoreCase("realop")||
++					current.value.tType.equalsIgnoreCase("relation")){
++				prefix = "f";
++			}else
++				postfix = "e";
++		}else if(current.primType.equalsIgnoreCase("string")){
++			if(current.value.tType.equalsIgnoreCase("string")){
++				prefix = "s\" ";
++				postfix = "\"";
++			}else
++				prefix = "s";
++		}
++		
++		System.out.print(prefix + current.value.tValue + postfix + " ");
++		return;
++	}			
++}
++
++
++
+diff -rupN ./ms3/stutest.in ./ms4/stutest.in
+--- ./ms3/stutest.in	2012-03-16 21:21:00.000000000 -0700
++++ ./ms4/stutest.in	2012-03-14 00:42:46.000000000 -0700
+@@ -1,23 +1,10 @@
+-(assign a "hello")
+-(assign b " world")
+-(assign x -3)
+-(assign y +4223.3000)
+-(assign c -3.234e4.32)
+-(assign d .34e5)
+-(assign f 0.342e-4.2)
+-(assign z true)
+-(println (+ a b))
+-(println (- / * % ^ = < e a b))
+-(if (< x y) (println "x is "less" than y"))
+-(while true println "hello")
+-(let ((a int) (b real) (c string)) ((assign a 3) (assign b 3.6) (assign c "lexical analyzer")))
+-( a )
+-( a a )
+-( a ( a ) a )
+-( ( ) )
+-( every test after this should fail )
+-()
+-( a ( ) ) )
+-a ( )
+-( ) a
+-( ( ) ( ( ) ( ) ) ( ( ) ) 
+\ No newline at end of file
++(println (+ 5.3 (+ 3 (+ 3 2))))
++(println (+ 1 ( e^5.)))
++(println (+ "hello" " world"))
++(println (* 3 5))
++(println (/ 2 (+ 1 (% 6 5))))
++(println (and true false))
++(println (iff true true))
++(println (sin 7.))
++(println (< 3 5))
++(println (= 7.3 7.3))
+diff -rupN ./ms3/Translator.java ./ms4/Translator.java
+--- ./ms3/Translator.java	2012-02-24 04:10:40.000000000 -0800
++++ ./ms4/Translator.java	2012-03-14 00:41:52.000000000 -0700
+@@ -2,18 +2,26 @@ import java.util.ArrayList;
+ 
+ 
+ public class Translator {
+-	
+-	
++
++
+ 	public static void main(String[] args){
+ 		ArrayList<Tokens> tokens = Lexer.lex(args);
+-		
++
+ 		Parser.parse(tokens);
+-		//Hashtable<String, String[]> userSymb = Parser.parse(tokens);
+-		
+-		
+-		//for(int i=0; i<tokens.size(); i++){
+-		//	System.out.println(tokens.get(i).lineNum+", "+tokens.get(i).tType+", "+tokens.get(i).tValue);
+-		//}
+-		//System.out.println(userSymb.get("x")[0]+", "+userSymb.get("x")[1]);
++		ParseTree tree = new ParseTree();
++		int pos = 0;
++		while(pos < tokens.size()){
++			ArrayList<Tokens> lineToks = new ArrayList<Tokens>();
++			int curline = tokens.get(pos).lineNum;
++			while(tokens.size()>pos&&tokens.get(pos).lineNum==curline){
++				lineToks.add(tokens.get(pos));
++				pos++;
++			}
++			
++			Nodes root = tree.makeTree(lineToks, 0);
++			tree.postTraverse(root);
++			System.out.println();
++			lineToks.clear();
++		}
+ 	}
+ }

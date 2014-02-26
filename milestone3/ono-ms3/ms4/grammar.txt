@@ -1,0 +1,43 @@
+(V, T, P, S)
+
+V = { EXPR, ATOM, bool, real, int, String, Boolop, relation, operation, delimiter, realop, realcons }
+T = { +, -, *, /, ^, %, e, true, false, REAL, INT, STRING, iff, and, or, not, =, <, if, println, let, while, assign, sin, cos, tan, (, ) }
+
+
+
+
+EXPR -> ( EXPR ) || println BOTH || if EXPR EXPR IF' || while EXPR EXPR || let VAR-LIST STATEMENT-AND-EXPR-LIST || assign ATOM EXPR 
+BOTH -> EXPR || ATOM
+IF' -> EXPR || lamdba
+
+VAR-LIST -> VAREXPR
+STATEMENT-AND-EXPR-LIST -> EXPR EXPR' 
+EXPR' -> EXPR EXPR' || lambda
+VAREXPR -> variable TYPE VAREXPR'
+VAREXPR' -> variable TYPE VAREXPR' || lambda
+TYPE -> int, real, string
+
+ATOM -> real || OPERATOR real real ||  RELATION real real || int || OPERATOR int int || RELATION int int || string STRING' || BOOLOP boolean boolean || sin real || cos real || tan real || logn real
+
+STRING' -> CONCAT string STRING' || lambda
+
+CONCAT -> +
+RELATION -> =, <
+OPERATOR -> +, -, *, /, %, ^
+
+
+
+ATOM -> OPERATOR real real || OPERATOR OPERATOR'
+
+OPERATOR' -> OPERATOR real real || lambda
+
+----------------------------------------------------------
+Grammer from assigment (Actually makes sense now, though I did remove and add some)
+
+F -> <endoffile> || T F
+
+T -> ( S )
+
+S -> atom S' || ( S ) S'
+S' -> atom S' || ( S ) S' || lambda
+

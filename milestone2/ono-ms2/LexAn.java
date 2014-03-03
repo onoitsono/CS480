@@ -64,10 +64,15 @@ public class LexAn {
 				if((lexemes[i][j].charAt(k) == '.')){
 				    flttok++;
 				}
+				if((lexemes[i][j].charAt(k) == '.') && (lexemes[i][j].contains("e"))){
+				    if(lexemes[i][j].indexOf(".") > lexemes[i][j].indexOf("e")){
+					    flttok += 2;
+				    }
+				}
 				if(lexemes[i][j].indexOf("e") != lexemes[i][j].lastIndexOf("e")){
 				    ecount++;
 				}
-				if((ecount > 1) || (flttok > 2) || (mincount > 2)){
+				if((ecount > 1) || (flttok > 1) || (mincount > 2)){
 				    lextok = ", unknown";
 				}
 				else{

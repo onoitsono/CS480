@@ -1,0 +1,1 @@
+[let [[a int] [b real] [c string]] [[assign a 3] [assign b 3.6] [assign c "lexical analyzer"]]]
